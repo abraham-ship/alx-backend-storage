@@ -6,7 +6,7 @@ from typing import Union, Optional, Callable
 from functools import wraps
 
 
-def count_calls(f):
+def count_calls(f) -> Callable:
     '''decorator for counting function'''
     @wraps(f)
     def wrapper(self, *args, **kwargs):
