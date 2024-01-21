@@ -6,6 +6,24 @@ from typing import Union, Optional, Callable
 from functools import wraps
 
 
+def call_history(method: Callable) -> Callable:
+    '''Storing lists'''
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        input_key = f"{self.__class__.__name__}.{method.__name__}:inputs"
+        output_key = f"{self.__class__.__name__}.{method.__name__}:outputs"
+
+        self._redis.rpush(input_key, str(args))
+
+        result = method(self, *args, **kwargs)
+
+        self._redis.rpush(output_key, str(result))
+
+        return result
+
+    return wrapper
+
+
 def count_calls(f) -> Callable:
     '''decorator for counting function'''
     @wraps(f)
