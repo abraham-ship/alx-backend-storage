@@ -10,7 +10,7 @@ def count_calls(f):
     '''decorator for counting function'''
     @wraps(f)
     def wrapper(self, *args, **kwargs):
-        key = f"{f.__qualname__}:calls"
+        key = f"{self.__class__.__name__}.{f.__name__}"
         count = self._redis.incr(key)
         return f(self, *args, **kwargs)
     return wrapper
@@ -30,13 +30,13 @@ class Cache:
         self._redis.set(key, data)
         return key
 
-    def get(self, key: str, fn: Optional[Callable] = None):
+    def get(self, key: str, fn: Optional[Callable] = None) ->\
+            Union[str, bytes, int, None]:
         '''has callable that data back to desired format'''
-        retrieved_data = self.data.get(key, None)
-        if retrieved_data is not None and callable(fn):
+        retrieved_data = self._redis.get(key)
+        if retrieved_data is not None and fn:
             return fn(retrieved_data)
-        else:
-            return retrieved_data
+        return retrieved_data
 
     def get_str(self, key: str) -> str:
         '''convert to string'''
