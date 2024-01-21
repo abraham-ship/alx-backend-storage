@@ -2,7 +2,18 @@
 '''writing strings to redis'''
 import redis
 import uuid
-from typing import Union
+from typing import Union, Optional, Callable
+from functools import wraps
+
+
+def count_calls(f):
+    '''decorator for counting function'''
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        key = f"{f.__qualname__}:calls"
+        count = self._redis.incr(key)
+        return f(self, *args, **kwargs)
+    return wrapper
 
 
 class Cache:
@@ -12,6 +23,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         '''generates a random key, stores input data and returns the key'''
         key = str(uuid.uuid4())
@@ -28,7 +40,7 @@ class Cache:
 
     def get_str(self, key: str) -> str:
         '''convert to string'''
-        return self.get(key, fn=str))
+        return self.get(key, fn=str)
 
     def get_int(self, key: str) -> int:
         '''convert to integer'''
