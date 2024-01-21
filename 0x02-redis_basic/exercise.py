@@ -63,3 +63,21 @@ class Cache:
     def get_int(self, key: str) -> int:
         '''convert to integer'''
         return self.get(key, fn=int)
+
+
+def replay(func: Callable) -> None:
+    qualified_name = f"{func.__self__.__class__.__name__}.{func.__name__}"
+    input_key = f"{qualified_name}:inputs"
+    output_key = f"{qualified_name}:outputs"
+
+    input_history = func.__self__._redis.lrange(input_key, 0, -1)
+    output_history = func.__self__._redis.lrange(output_key, 0, -1)
+
+    print(f"{qualified_name} was called {len(input_history)} times:")
+
+    for inputs, output in zip(input_history, output_history):
+        inputs_str = inputs.decode('utf-8') if isinstance(inputs, bytes)\
+            else inputs
+        output_str = output.decode('utf-8') if isinstance(output, bytes)\
+            else output
+        print(f"{qualified_name}(*{inputs_str}) -> {output_str}")
